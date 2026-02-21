@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار الآلات الموسيقية</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .quiz-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .question-container {
+            margin-bottom: 30px;
+        }
+
+        .question-text {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .question-text.active {
+            display: block;
+        }
+
+        .choices {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .choice {
+            display: none;
+        }
+
+        .choice.active {
+            display: block;
+        }
+
+        .choice label {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+
+        .choice label:hover {
+            background: #e8e8e8;
+            transform: translateX(-5px);
+        }
+
+        .choice input {
+            margin-left: 10px;
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+        }
+
+        .choice input:checked + .choice-text {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .choice-text {
+            margin-right: 10px;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-next {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-next:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-prev {
+            background: #ccc;
+            color: #333;
+        }
+
+        .btn-prev:hover {
+            background: #bbb;
+        }
+
+        .btn-submit {
+            background: #48bb78;
+            color: white;
+            width: 100%;
+        }
+
+        .btn-submit:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(72, 187, 120, 0.4);
+        }
+
+        .progress {
+            margin-bottom: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .results {
+            display: none;
+            text-align: center;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .score {
+            font-size: 48px;
+            color: #667eea;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+
+        .results-message {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .btn-restart {
+            background: #667eea;
+            color: white;
+            margin-top: 20px;
+        }
+
+        .btn-restart:hover {
+            background: #5568d3;
+        }
+
+        .quiz-content {
+            display: none;
+        }
+
+        .quiz-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <h1>اختبار الآلات الموسيقية 🎵</h1>
+
+        <div class="quiz-content active">
+            <div class="progress">
+                <span id="current-question">1</span> / <span id="total-questions">15</span>
+            </div>
+
+            <div class="question-container">
+                <div class="question-text" id="question-text"></div>
+                <div class="choices" id="choices"></div>
+            </div>
+
+            <div class="buttons">
+                <button class="btn-prev" id="btn-prev" onclick="previousQuestion()" style="display: none;">السابق</button>
+                <button class="btn-next" id="btn-next" onclick="nextQuestion()">التالي</button>
+                <button class="btn-submit" id="btn-submit" onclick="submitQuiz()" style="display: none;">إرسال</button>
+            </div>
+        </div>
+
+        <div class="results" id="results">
+            <h2>النتيجة النهائية</h2>
+            <div class="score" id="score"></div>
+            <div class="results-message" id="results-message"></div>
+            <button class="btn-restart" onclick="restartQuiz()">إعادة البداية</button>
+        </div>
+    </div>
+
+    <script>
+        const QUESTIONS = [
+            {"q": "أي آلة نحاسية؟", "choices": ["فلوت", "ترومبيت", "كلارينيت", "أوبوا"], "answer": "ترومبيت"},
+            {"q": "الصوت في النحاسية ينتج من؟", "choices": ["أوتار", "قصبة", "اهتزاز الشفاه", "مفاتيح"], "answer": "اهتزاز الشفاه"},
+            {"q": "أغلظ آلة نحاسية؟", "choices": ["ترومبيت", "ترومبون", "هورن", "توبا"], "answer": "توبا"},
+            {"q": "الترومبون فيه؟", "choices": ["مفاتيح", "سلايد", "ثقوب", "قصبة"], "answer": "سلايد"},
+            {"q": "آلة خشبية؟", "choices": ["توبا", "فلوت", "ترومبيت", "هورن"], "answer": "فلوت"},
+            {"q": "الكلارينيت يعمل بـ؟", "choices": ["قصبة مفردة", "قصبة مزدوجة", "شفاه", "مفاتيح"], "answer": "قصبة مفردة"},
+            {"q": "آلة بقصبة مزدوجة؟", "choices": ["فلوت", "كلارينيت", "أوبوا", "ساكسفون"], "answer": "أوبوا"},
+            {"q": "أعمق خشبيات؟", "choices": ["بيكولو", "أوبوا", "فاجوت", "فلوت"], "answer": "فاجوت"},
+            {"q": "الفلوت يختلف لأنه؟", "choices": ["نحاسي", "بدون قصبة", "غليظ", "بدون مفاتيح"], "answer": "بدون قصبة"},
+            {"q": "الساكسفون يُصنف؟", "choices": ["نحاسي", "خشبي", "وتري", "إيقاعي"], "answer": "خشبي"},
+            {"q": "البيكولو يشبه؟", "choices": ["فلوت", "أوبوا", "كلارينيت", "فاجوت"], "answer": "فلوت"},
+            {"q": "آلة تستخدم في الجاز؟", "choices": ["توبا", "ترومبيت", "فاجوت", "أوبوا"], "answer": "ترومبيت"},
+            {"q": "الهورن ينتمي؟", "choices": ["خشبيات", "نحاسيات", "وتريات", "إيقاع"], "answer": "نحاسيات"},
+            {"q": "الصوت الحاد جدًا في الخشبيات؟", "choices": ["بيكولو", "فاجوت", "كلارينيت", "أوبوا"], "answer": "بيكولو"},
+            {"q": "آلة نحاسية كبيرة؟", "choices": ["ترومبيت", "توبا", "فلوت", "كلارينيت"], "answer": "توبا"},
+        ];
+
+        let currentQuestion = 0;
+        let userAnswers = new Array(QUESTIONS.length).fill(null);
+
+        function loadQuestion() {
+            const question = QUESTIONS[currentQuestion];
+            const questionElement = document.getElementById('question-text');
+            questionElement.textContent = question.q;
+            questionElement.classList.add('active');
+            document.getElementById('current-question').textContent = currentQuestion + 1;
+            document.getElementById('total-questions').textContent = QUESTIONS.length;
+
+            const choicesContainer = document.getElementById('choices');
+            choicesContainer.innerHTML = '';
+
+            question.choices.forEach((choice) => {
+                const choiceDiv = document.createElement('div');
+                choiceDiv.className = 'choice active';
+                
+                const label = document.createElement('label');
+                const input = document.createElement('input');
+                input.type = 'radio';
+                input.name = 'choice';
+                input.value = choice;
+                input.checked = userAnswers[currentQuestion] === choice;
+
+                const choiceText = document.createElement('span');
+                choiceText.className = 'choice-text';
+                choiceText.textContent = choice;
+
+                label.appendChild(input);
+                label.appendChild(choiceText);
+                choiceDiv.appendChild(label);
+                choicesContainer.appendChild(choiceDiv);
+            });
+
+            updateButtons();
+        }
+
+        function updateButtons() {
+            const prevBtn = document.getElementById('btn-prev');
+            const nextBtn = document.getElementById('btn-next');
+            const submitBtn = document.getElementById('btn-submit');
+
+            prevBtn.style.display = currentQuestion > 0 ? 'block' : 'none';
+            
+            if (currentQuestion === QUESTIONS.length - 1) {
+                nextBtn.style.display = 'none';
+                submitBtn.style.display = 'block';
+            } else {
+                nextBtn.style.display = 'block';
+                submitBtn.style.display = 'none';
+            }
+        }
+
+        function saveAnswer() {
+            const selected = document.querySelector('input[name="choice"]:checked');
+            if (selected) {
+                userAnswers[currentQuestion] = selected.value;
+            }
+        }
+
+        function nextQuestion() {
+            saveAnswer();
+            if (currentQuestion < QUESTIONS.length - 1) {
+                currentQuestion++;
+                loadQuestion();
+            }
+        }
+
+        function previousQuestion() {
+            saveAnswer();
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                loadQuestion();
+            }
+        }
+
+        function submitQuiz() {
+            saveAnswer();
+            let score = 0;
+            userAnswers.forEach((answer, index) => {
+                if (answer === QUESTIONS[index].answer) {
+                    score++;
+                }
+            });
+
+            const percentage = Math.round((score / QUESTIONS.length) * 100);
+            
+            document.querySelector('.quiz-content').classList.remove('active');
+            document.getElementById('results').classList.add('show');
+            document.getElementById('score').textContent = `${score} / ${QUESTIONS.length}`;
+            document.getElementById('results-message').textContent = `النسبة: ${percentage}%`;
+        }
+
+        function restartQuiz() {
+            currentQuestion = 0;
+            userAnswers = new Array(QUESTIONS.length).fill(null);
+            document.querySelector('.quiz-content').classList.add('active');
+            document.getElementById('results').classList.remove('show');
+            loadQuestion();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadQuestion();
+        });
+    </script>
+</body>
+</html>
